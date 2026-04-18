@@ -1,0 +1,168 @@
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: dark;
+  background: #0d1117;
+  color: #c9d1d9;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100vh;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+button {
+  border-radius: 6px;
+  border: 1px solid transparent;
+  padding: 6px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+button:hover {
+  opacity: 0.85;
+}
+
+.btn-start {
+  background: #238636;
+  color: white;
+  border-color: #238636;
+}
+
+.btn-stop {
+  background: #da3633;
+  color: white;
+  border-color: #da3633;
+}
+
+.btn-remove {
+  background: transparent;
+  color: #da3633;
+  border-color: #da3633;
+}
+
+.btn-primary {
+  background: #21262d;
+  color: #c9d1d9;
+  border-color: #30363d;
+}
+
+.card {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  padding: 16px;
+  margin: 8px;
+}
+
+.grid {
+  display: grid;
+  gap: 16px;
+}
+
+.flex {
+  display: flex;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+.gap-2 {
+  gap: 8px;
+}
+
+.gap-4 {
+  gap: 16px;
+}
+
+.text-sm {
+  font-size: 14px;
+}
+
+.text-lg {
+  font-size: 18px;
+}
+
+.text-xl {
+  font-size: 24px;
+}
+
+.text-muted {
+  color: #8b949e;
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.badge-running {
+  background: rgba(35, 134, 54, 0.4);
+  color: #3fb950;
+}
+
+.badge-stopped {
+  background: rgba(218, 54, 51, 0.4);
+  color: #f85149;
+}
+
+.badge-created {
+  background: rgba(121, 192, 255, 0.4);
+  color: #79c0ff;
+}
+
+nav {
+  background: #161b22;
+  border-bottom: 1px solid #30363d;
+  padding: 12px 24px;
+}
+
+nav button {
+  background: transparent;
+  color: #8b949e;
+  border: none;
+  padding: 8px 16px;
+  margin-right: 4px;
+}
+
+nav button.active {
+  color: #c9d1d9;
+  background: #21262d;
+  border-radius: 6px;
+}
+
+nav button:hover {
+  color: #c9d1d9;
+  background: #21262d;
+}
+
+.graph-container {
+  width: 100%;
+  height: calc(100vh - 120px);
+  background: #0d1117;
+}
