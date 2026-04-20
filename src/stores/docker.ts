@@ -1,98 +1,170 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { Container, Network, Image, Volume, GraphData, ViewMode } from '../types'
-
-const API = '/api'
+import { apiFetch } from '../api/client'
+import type {
+  Container,
+  Network,
+  Image,
+  Volume,
+  GraphData,
+  ViewMode,
+  Project,
+  DeployJob,
+  ContainerInspect,
+} from '../types'
 
 export const useDockerStore = defineStore('docker', () => {
+  // --- State ---
   const containers = ref<Container[]>([])
   const networks = ref<Network[]>([])
   const images = ref<Image[]>([])
   const volumes = ref<Volume[]>([])
+  const projects = ref<Project[]>([])
+  const deployJobs = ref<DeployJob[]>([])
   const graphData = ref<GraphData>({ nodes: [], links: [] })
-  const loading = ref(false)
-  const error = ref<string | null>(null)
-  const viewMode = ref<ViewMode>('graph')
+  const inspectedContainer = ref<ContainerInspect | null>(null)
 
+  // Per-section loading flags (fixes the race condition)
+  const loadingContainers = ref(false)
+  const loadingNetworks = ref(false)
+  const loadingImages = ref(false)
+  const loadingVolumes = ref(false)
+  const loadingGraph = ref(false)
+  const loadingProjects = ref(false)
+  const loadingDeploy = ref(false)
+  const loadingInspect = ref(false)
+
+  const error = ref<string | null>(null)
+  const viewMode = ref<ViewMode>('dashboard')
+
+  // --- Computed ---
+  const loading = computed(
+    () =>
+      loadingContainers.value ||
+      loadingNetworks.value ||
+      loadingImages.value ||
+      loadingVolumes.value ||
+      loadingGraph.value ||
+      loadingProjects.value ||
+      loadingDeploy.value
+  )
   const containerCount = computed(() => containers.value.length)
-  const runningCount = computed(() => containers.value.filter(c => c.state === 'running').length)
+  const runningCount = computed(
+    () => containers.value.filter((c) => c.state === 'running').length
+  )
+  const stoppedCount = computed(
+    () => containers.value.filter((c) => c.state === 'exited').length
+  )
   const networkCount = computed(() => networks.value.length)
   const imageCount = computed(() => images.value.length)
+  const projectCount = computed(() => projects.value.length)
+
+  // --- Fetchers ---
 
   async function fetchContainers() {
-    loading.value = true
-    error.value = null
+    loadingContainers.value = true
     try {
-      const res = await fetch(`${API}/containers`)
-      if (!res.ok) throw new Error('Failed to fetch containers')
-      containers.value = await res.json()
+      containers.value = await apiFetch<Container[]>('/containers')
     } catch (e) {
       error.value = (e as Error).message
     } finally {
-      loading.value = false
+      loadingContainers.value = false
     }
   }
 
   async function fetchNetworks() {
-    loading.value = true
-    error.value = null
+    loadingNetworks.value = true
     try {
-      const res = await fetch(`${API}/networks`)
-      if (!res.ok) throw new Error('Failed to fetch networks')
-      networks.value = await res.json()
+      networks.value = await apiFetch<Network[]>('/networks')
     } catch (e) {
       error.value = (e as Error).message
     } finally {
-      loading.value = false
+      loadingNetworks.value = false
     }
   }
 
   async function fetchImages() {
-    loading.value = true
-    error.value = null
+    loadingImages.value = true
     try {
-      const res = await fetch(`${API}/images`)
-      if (!res.ok) throw new Error('Failed to fetch images')
-      images.value = await res.json()
+      images.value = await apiFetch<Image[]>('/images')
     } catch (e) {
       error.value = (e as Error).message
     } finally {
-      loading.value = false
+      loadingImages.value = false
     }
   }
 
   async function fetchVolumes() {
-    loading.value = true
-    error.value = null
+    loadingVolumes.value = true
     try {
-      const res = await fetch(`${API}/volumes`)
-      if (!res.ok) throw new Error('Failed to fetch volumes')
-      volumes.value = await res.json()
+      volumes.value = await apiFetch<Volume[]>('/volumes')
     } catch (e) {
       error.value = (e as Error).message
     } finally {
-      loading.value = false
+      loadingVolumes.value = false
     }
   }
 
   async function fetchGraph() {
-    loading.value = true
-    error.value = null
+    loadingGraph.value = true
     try {
-      const res = await fetch(`${API}/graph`)
-      if (!res.ok) throw new Error('Failed to fetch graph data')
-      graphData.value = await res.json()
+      graphData.value = await apiFetch<GraphData>('/graph')
     } catch (e) {
       error.value = (e as Error).message
     } finally {
-      loading.value = false
+      loadingGraph.value = false
     }
   }
 
+  async function fetchProjects() {
+    loadingProjects.value = true
+    try {
+      projects.value = await apiFetch<Project[]>('/projects')
+    } catch (e) {
+      error.value = (e as Error).message
+    } finally {
+      loadingProjects.value = false
+    }
+  }
+
+  async function fetchDeployJobs() {
+    loadingDeploy.value = true
+    try {
+      deployJobs.value = await apiFetch<DeployJob[]>('/deploy/jobs')
+    } catch (e) {
+      error.value = (e as Error).message
+    } finally {
+      loadingDeploy.value = false
+    }
+  }
+
+  async function fetchDeployStatus(name: string): Promise<DeployJob | null> {
+    try {
+      return await apiFetch<DeployJob>(`/deploy/status/${encodeURIComponent(name)}`)
+    } catch {
+      return null
+    }
+  }
+
+  async function inspectContainer(id: string) {
+    loadingInspect.value = true
+    try {
+      inspectedContainer.value = await apiFetch<ContainerInspect>(
+        `/containers/${encodeURIComponent(id)}`
+      )
+    } catch (e) {
+      error.value = (e as Error).message
+      inspectedContainer.value = null
+    } finally {
+      loadingInspect.value = false
+    }
+  }
+
+  // --- Actions ---
+
   async function startContainer(id: string) {
     try {
-      const res = await fetch(`${API}/containers/${id}/start`, { method: 'POST' })
-      if (!res.ok) throw new Error('Failed to start container')
+      await apiFetch(`/containers/${encodeURIComponent(id)}/start`, { method: 'POST' })
       await fetchContainers()
     } catch (e) {
       error.value = (e as Error).message
@@ -101,8 +173,7 @@ export const useDockerStore = defineStore('docker', () => {
 
   async function stopContainer(id: string) {
     try {
-      const res = await fetch(`${API}/containers/${id}/stop`, { method: 'POST' })
-      if (!res.ok) throw new Error('Failed to stop container')
+      await apiFetch(`/containers/${encodeURIComponent(id)}/stop`, { method: 'POST' })
       await fetchContainers()
     } catch (e) {
       error.value = (e as Error).message
@@ -111,15 +182,43 @@ export const useDockerStore = defineStore('docker', () => {
 
   async function removeContainer(id: string, force = false) {
     try {
-      const res = await fetch(`${API}/containers/${id}?force=${force}`, { method: 'DELETE' })
-      if (!res.ok) throw new Error('Failed to remove container')
+      await apiFetch(`/containers/${encodeURIComponent(id)}?force=${force}`, {
+        method: 'DELETE',
+      })
       await fetchContainers()
     } catch (e) {
       error.value = (e as Error).message
     }
   }
 
+  async function createProject(name: string, gitUrl: string) {
+    try {
+      await apiFetch('/projects', {
+        method: 'POST',
+        body: { name, gitUrl },
+      })
+      await fetchProjects()
+      await fetchDeployJobs()
+    } catch (e) {
+      error.value = (e as Error).message
+      throw e
+    }
+  }
+
+  async function createTunnel(projectName: string, token: string) {
+    try {
+      await apiFetch(`/projects/${encodeURIComponent(projectName)}/tunnel`, {
+        method: 'POST',
+        body: { token },
+      })
+    } catch (e) {
+      error.value = (e as Error).message
+      throw e
+    }
+  }
+
   async function fetchAll() {
+    error.value = null
     await Promise.all([fetchContainers(), fetchNetworks(), fetchGraph()])
   }
 
@@ -127,28 +226,61 @@ export const useDockerStore = defineStore('docker', () => {
     viewMode.value = mode
   }
 
+  function clearError() {
+    error.value = null
+  }
+
+  function clearInspect() {
+    inspectedContainer.value = null
+  }
+
   return {
+    // State
     containers,
     networks,
     images,
     volumes,
+    projects,
+    deployJobs,
     graphData,
+    inspectedContainer,
     loading,
+    loadingContainers,
+    loadingNetworks,
+    loadingImages,
+    loadingVolumes,
+    loadingGraph,
+    loadingProjects,
+    loadingDeploy,
+    loadingInspect,
     error,
     viewMode,
+    // Computed
     containerCount,
     runningCount,
+    stoppedCount,
     networkCount,
     imageCount,
+    projectCount,
+    // Fetchers
     fetchContainers,
     fetchNetworks,
     fetchImages,
     fetchVolumes,
     fetchGraph,
+    fetchProjects,
+    fetchDeployJobs,
+    fetchDeployStatus,
+    inspectContainer,
     fetchAll,
+    // Actions
     startContainer,
     stopContainer,
     removeContainer,
-    setViewMode
+    createProject,
+    createTunnel,
+    setViewMode,
+    clearError,
+    clearInspect,
   }
 })
