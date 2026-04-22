@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { useDockerStore } from '../stores/docker'
+import { useAuthStore } from '../stores/auth'
 import type { ViewMode } from '../types'
 
 const store = useDockerStore()
+const authStore = useAuthStore()
 
 const tabs: { icon: string; label: string; mode: ViewMode }[] = [
   { icon: '📊', label: 'Dashboard', mode: 'dashboard' },
@@ -54,6 +56,10 @@ function setMode(mode: ViewMode) {
         <button class="btn-secondary btn-sm" @click="store.fetchAll()">
           ↻ Refresh
         </button>
+        <span class="user-info">{{ authStore.currentUser?.username }}</span>
+        <button class="btn-ghost btn-sm" @click="authStore.logout()" title="Logout">
+          🚪 Logout
+        </button>
       </div>
     </div>
 
@@ -69,3 +75,13 @@ function setMode(mode: ViewMode) {
     </nav>
   </header>
 </template>
+
+<style scoped>
+.user-info {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  padding: 0 8px;
+  border-left: 1px solid var(--border-color);
+  margin-left: 8px;
+}
+</style>

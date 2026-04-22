@@ -3,10 +3,11 @@
  */
 
 const BASE = '/api'
-const API_KEY = import.meta.env.VITE_API_KEY || ''
+const TOKEN_KEY = 'docker_visual_token'
 
 interface ApiOptions extends Omit<RequestInit, 'body'> {
   body?: unknown
+  skipAuth?: boolean
 }
 
 export class ApiError extends Error {
@@ -20,18 +21,24 @@ export class ApiError extends Error {
   }
 }
 
+function getToken(): string | null {
+  return localStorage.getItem(TOKEN_KEY)
+}
+
 export async function apiFetch<T = unknown>(
   endpoint: string,
   options: ApiOptions = {}
 ): Promise<T> {
-  const { body, headers: extraHeaders, ...rest } = options
+  const { body, headers: extraHeaders, skipAuth, ...rest } = options
 
   const headers: Record<string, string> = {
     ...(extraHeaders as Record<string, string>),
   }
 
-  if (API_KEY) {
-    headers['Authorization'] = `Bearer ${API_KEY}`
+  // Add JWT token if available and not skipping auth
+  const token = getToken()
+  if (token && !skipAuth) {
+    headers['Authorization'] = `Bearer ${token}`
   }
 
   if (body !== undefined) {

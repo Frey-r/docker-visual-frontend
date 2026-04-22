@@ -183,3 +183,31 @@ export interface CreateContainerResponse {
   name: string
   message: string
 }
+
+// --- Auth types ---
+
+export interface User {
+  id: number
+  username: string
+  created_at: string
+}
+
+export interface LoginRequest {
+  username: string
+  password: string
+}
+
+export interface RegisterRequest {
+  username: string
+  password: string
+}
+
+export interface AuthResponse {
+  token: string
+  expires_at: number
+  user: User
+}
+
+export interface SetupStatus {
+  requires_setup: boolean
+}
