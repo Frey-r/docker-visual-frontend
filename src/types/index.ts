@@ -153,3 +153,33 @@ export type ViewMode =
   | 'containers'
   | 'images'
   | 'tunnels'
+
+// --- Container Creation types ---
+
+export interface PortMapping {
+  host_port: number
+  container_port: number
+  protocol: string
+}
+
+export interface VolumeMapping {
+  host_path: string
+  container_path: string
+  read_only: boolean
+}
+
+export interface CreateContainerRequest {
+  image: string
+  name?: string
+  env?: Record<string, string>
+  ports?: PortMapping[]
+  volumes?: VolumeMapping[]
+  network_id?: string
+  restart_policy?: string
+}
+
+export interface CreateContainerResponse {
+  id: string
+  name: string
+  message: string
+}

@@ -1,8 +1,26 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useDockerStore } from '../stores/docker'
+import CreateContainerModal from './CreateContainerModal.vue'
 
 const store = useDockerStore()
+
+const showCreateModal = ref(false)
+const selectedImage = ref('')
+
+function openCreateModal(imageTag: string) {
+  selectedImage.value = imageTag
+  showCreateModal.value = true
+}
+
+function closeCreateModal() {
+  showCreateModal.value = false
+  selectedImage.value = ''
+}
+
+function onContainerCreated() {
+  store.fetchContainers()
+}
 
 function formatSize(bytes: number) {
   if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
@@ -61,6 +79,7 @@ onMounted(() => {
               <th>Image ID</th>
               <th>Size</th>
               <th>Created</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -79,10 +98,28 @@ onMounted(() => {
               <td>
                 <span class="text-sm text-muted">{{ formatDate(img.created) }}</span>
               </td>
+              <td>
+                <button 
+                  v-if="img.repo_tags && img.repo_tags.length > 0 && img.repo_tags[0] !== '<none>:<none>'"
+                  class="btn-primary btn-sm"
+                  @click="openCreateModal(img.repo_tags[0])"
+                >
+                  + Create Container
+                </button>
+                <span v-else class="text-muted text-sm">No tag</span>
+              </td>
             </tr>
           </tbody>
         </table>
       </div>
     </div>
+
+    <!-- Create Container Modal -->
+    <CreateContainerModal
+      :show="showCreateModal"
+      :image-name="selectedImage"
+      @close="closeCreateModal"
+      @created="onContainerCreated"
+    />
   </div>
 </template>

@@ -11,6 +11,8 @@ import type {
   Project,
   DeployJob,
   ContainerInspect,
+  CreateContainerRequest,
+  CreateContainerResponse,
 } from '../types'
 
 export const useDockerStore = defineStore('docker', () => {
@@ -217,6 +219,21 @@ export const useDockerStore = defineStore('docker', () => {
     }
   }
 
+  async function createContainer(req: CreateContainerRequest): Promise<CreateContainerResponse> {
+    try {
+      const response = await apiFetch<CreateContainerResponse>('/containers', {
+        method: 'POST',
+        body: req,
+      })
+      await fetchContainers()
+      await fetchImages()
+      return response
+    } catch (e) {
+      error.value = (e as Error).message
+      throw e
+    }
+  }
+
   async function fetchAll() {
     error.value = null
     await Promise.all([fetchContainers(), fetchNetworks(), fetchGraph()])
@@ -279,6 +296,7 @@ export const useDockerStore = defineStore('docker', () => {
     removeContainer,
     createProject,
     createTunnel,
+    createContainer,
     setViewMode,
     clearError,
     clearInspect,
