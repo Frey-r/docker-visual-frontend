@@ -109,3 +109,4 @@ playwright/.cache
 **/node_modules
 **/dist
 **/.bun
+screenshot.mjs
